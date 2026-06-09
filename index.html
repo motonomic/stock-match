@@ -143,7 +143,7 @@ tbody td{padding:6px 9px;border-right:1px solid var(--bord);vertical-align:middl
   <button class="fbtn" onclick="deselectAll()">&#9744; Clear Sel</button>
   <button class="fbtn acc" onclick="downloadPDF()">&#8595; PDF</button>
   <button class="fbtn wa" onclick="sendWA()">WhatsApp &#8599;</button>
-  <span class="rcount" id="rcount">Loading...</span>
+  <span class="rcount" id="rcount">Loading data.json...</span>
 </div>
 <div class="tscroll" id="tscroll">
   <table>
@@ -513,21 +513,24 @@ document.getElementById('f-dcode').addEventListener('input', applyF);
 document.getElementById('f-dname').addEventListener('input', applyF);
 document.getElementById('f-part').addEventListener('input', applyF);
 
-function boot(data){ RAW = data; fd = RAW.slice(); updStats(); render(); }
-function showLoadError(msg){
-  var n = document.getElementById('nores');
-  document.getElementById('rcount').textContent = 'Failed to load data.json';
-  n.style.display = 'block';
-  n.innerHTML = '<div style="font-size:32px;margin-bottom:10px">&#9888;</div>'
-    + '<div>Could not load <b>data.json</b>.<br>Make sure data.json sits next to index.html, '
-    + 'and open this page from its web address (not by double-clicking the file).'
-    + '<br><br><small style="color:#9a9a8e">' + msg + '</small></div>';
+function bootData(payload){
+  RAW = payload.rows || payload;
+  fd = RAW.slice();
+  if(payload.bo_date){
+    var sub=document.querySelector('.hdr-sub');
+    if(sub) sub.innerHTML='Branches: CHK (Chakkarakkal) &bull; KNR (Kannur) &bull; KPBA (Kuthuparamba) &bull; TPBA (Taliparamba) &bull; BO '+payload.bo_date+' &bull; Stock '+(payload.stock_date||payload.bo_date);
+  }
+  updStats();
+  render();
 }
-document.getElementById('rcount').textContent = 'Loading data\u2026';
-fetch('./data.json', {cache:'no-store'})
-  .then(function(r){ if(!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
-  .then(function(d){ boot(d); })
-  .catch(function(e){ showLoadError(e.message); });
+fetch('data.json?_='+Date.now())
+  .then(function(res){ if(!res.ok) throw new Error('HTTP '+res.status); return res.json(); })
+  .then(function(payload){ bootData(payload); })
+  .catch(function(err){
+    var nr=document.getElementById('nores');
+    if(nr){ nr.style.display='block'; nr.innerHTML='<div style="font-size:32px;margin-bottom:10px">&#9888;</div><div>Could not load <b>data.json</b>.</div><div style="margin-top:6px;font-size:12px">Place data.json in the same folder as this file. ('+err.message+')</div>'; }
+    var rc=document.getElementById('rcount'); if(rc) rc.textContent='data.json not found';
+  });
 </script>
 
 </body>
