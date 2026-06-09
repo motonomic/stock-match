@@ -1,0 +1,534 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BO/PO Stock Match - South Region</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:wght@400;500;600;700&display=swap');
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{--bg:#fff;--surf:#f8f8f6;--surf2:#f0f0ec;--bord:#e2e2da;--txt:#1a1a18;--txt2:#58584e;--txt3:#9a9a8e;--accent:#e65c00;--acc2:#ff8c42;--green:#16703a;--red:#c0392b;--blue:#1a4f8a;}
+html,body{height:100%;margin:0}
+body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--txt);font-size:13px;display:flex;flex-direction:column;height:100vh;overflow:hidden}
+.hdr{background:#1a1a18;color:#fff;padding:12px 20px;display:flex;align-items:center;gap:16px;border-bottom:3px solid var(--accent);flex-shrink:0}
+.hdr-title{font-size:15px;font-weight:700;letter-spacing:-.3px}
+.hdr-sub{font-size:10px;opacity:.5;font-family:'DM Mono',monospace;text-transform:uppercase;letter-spacing:.8px;margin-top:2px}
+.hdr-stats{margin-left:auto;display:flex;gap:18px}
+.sv{font-size:17px;font-weight:700;font-family:'DM Mono',monospace;color:var(--acc2);line-height:1}
+.sl{font-size:9px;opacity:.5;text-transform:uppercase;letter-spacing:.7px;margin-top:1px;text-align:right}
+.branches{background:var(--surf);border-bottom:1px solid var(--bord);padding:6px 20px;display:flex;gap:16px;align-items:center;flex-shrink:0}
+.btag{display:inline-flex;align-items:center;gap:5px;font-size:11px;font-weight:500}
+.bd{width:8px;height:8px;border-radius:50%}
+.b1{background:#2563eb}.b2{background:#059669}.b3{background:#d97706}.b4{background:#7c3aed}
+.fbar{background:var(--bg);border-bottom:1px solid var(--bord);padding:8px 20px;display:flex;gap:8px;flex-wrap:wrap;align-items:flex-end;flex-shrink:0;box-shadow:0 2px 6px rgba(0,0,0,.05)}
+.fg{display:flex;flex-direction:column;gap:2px}
+.fl{font-size:9px;text-transform:uppercase;letter-spacing:.7px;color:var(--txt3);font-weight:700}
+.fc{height:30px;border:1.5px solid var(--bord);border-radius:5px;padding:0 8px;font-family:'DM Sans',sans-serif;font-size:12px;background:var(--bg);color:var(--txt);outline:none;transition:border-color .15s}
+.fc:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(230,92,0,.1)}
+.fbtn{height:30px;padding:0 11px;border-radius:5px;border:1.5px solid var(--bord);background:var(--surf2);color:var(--txt2);cursor:pointer;font-family:'DM Sans',sans-serif;font-size:11px;font-weight:600;transition:all .15s;white-space:nowrap;align-self:flex-end}
+.fbtn:hover{background:var(--bord)}
+.fbtn.acc{background:var(--accent);color:#fff;border-color:var(--accent)}.fbtn.acc:hover{background:#c85000}
+.fbtn.grn{background:#059669;color:#fff;border-color:#059669}.fbtn.grn:hover{background:#047857}
+.fbtn.wa{background:#25d366;color:#fff;border-color:#25d366}.fbtn.wa:hover{background:#1db954}
+.rcount{font-size:10px;color:var(--txt3);font-family:'DM Mono',monospace;align-self:center;white-space:nowrap}
+.selcount{font-size:11px;font-weight:600;color:var(--accent);font-family:'DM Mono',monospace;align-self:center;min-width:80px}
+.tscroll{flex:1;overflow:auto;min-height:0}
+table{width:100%;border-collapse:collapse;font-size:12px}
+thead th{position:sticky;top:0;z-index:50;background:#1a1a18;color:#fff;padding:8px 9px 7px;text-align:left;font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.5px;white-space:nowrap;border-right:1px solid #2e2e2c;cursor:pointer;user-select:none}
+thead th.stk-hdr{background:#1e3a5f;color:#93c5fd}
+thead th.nosort{cursor:default}
+thead th.sasc::after{content:" ↑";opacity:.8}
+thead th.sdesc::after{content:" ↓";opacity:.8}
+tbody tr{border-bottom:1px solid var(--bord)}
+tbody tr:hover{background:#fff8f4}
+tbody tr.sel-row{background:#fff0e6!important}
+tbody td{padding:6px 9px;border-right:1px solid var(--bord);vertical-align:middle}
+.dc{font-family:'DM Mono',monospace;font-size:10px;color:var(--txt2);white-space:nowrap}
+.dn{font-weight:600;font-size:12px;max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ds{font-size:10px;color:var(--txt3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:180px}
+.pn{font-family:'DM Mono',monospace;font-size:11px;color:var(--blue);white-space:nowrap}
+.pd{font-size:11px;max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.mn{font-size:10px;color:var(--txt2);max-width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.sbadge{display:inline-block;padding:1px 6px;border-radius:3px;font-size:10px;font-weight:700;font-family:'DM Mono',monospace;white-space:nowrap}
+.sAP{background:#fef3c7;color:#92400e}.sKA{background:#d1fae5;color:#065f46}
+.sKL{background:#dbeafe;color:#1e40af}.sTN{background:#fce7f3;color:#9d174d}
+.sAN{background:#ede9fe;color:#5b21b6}.sPY{background:#ffedd5;color:#9a3412}.sBW{background:#f1f5f9;color:#334155}
+.stkc{text-align:center;font-family:'DM Mono',monospace;font-size:12px;font-weight:600;white-space:nowrap;min-width:44px}
+.q0{color:#bbb}.qlow{color:#d97706}.qok{color:#16703a}
+.chkv{color:#2563eb}.knrv{color:#059669}.kpbv{color:#b45309}.tpbv{color:#7c3aed}
+.chkbdr{border-left:2px solid #2563eb!important}
+.totc{background:#eef2ff!important;font-weight:700;color:#1a4f8a!important}
+.bq{text-align:center;font-family:'DM Mono',monospace;font-weight:700;color:var(--red);font-size:12px;white-space:nowrap}
+.dlpv{text-align:right;font-family:'DM Mono',monospace;font-size:11px;color:var(--txt2);white-space:nowrap}
+.stbadge{display:inline-block;padding:1px 5px;border-radius:3px;font-size:9px;font-weight:700;white-space:nowrap}
+.stBO{background:#fee2e2;color:#b91c1c}.stOWP{background:#fef9c3;color:#854d0e}.stOTH{background:var(--surf2);color:var(--txt2)}
+.pag{display:flex;align-items:center;justify-content:center;gap:4px;padding:8px 20px;border-top:1px solid var(--bord);background:var(--surf);flex-shrink:0}
+.pb{height:26px;min-width:26px;padding:0 7px;border:1.5px solid var(--bord);border-radius:4px;background:var(--bg);color:var(--txt);font-size:11px;cursor:pointer;font-family:'DM Mono',monospace;transition:all .1s}
+.pb:hover:not(:disabled){background:var(--surf2);border-color:var(--accent)}
+.pb.act{background:var(--accent);color:#fff;border-color:var(--accent);font-weight:700}
+.pb:disabled{opacity:.3;cursor:default}
+.pi{font-size:10px;color:var(--txt3);font-family:'DM Mono',monospace;padding:0 5px}
+.nores{text-align:center;padding:60px 20px;color:var(--txt3)}
+.moverlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:500;align-items:center;justify-content:center}
+.moverlay.open{display:flex}
+.modal{background:#fff;border-radius:10px;padding:22px;max-width:460px;width:92%;box-shadow:0 20px 60px rgba(0,0,0,.25)}
+.mtitle{font-size:14px;font-weight:700;margin-bottom:14px}
+.mrow{display:flex;justify-content:space-between;align-items:baseline;padding:4px 0;border-bottom:1px solid var(--bord)}
+.mrow:last-child{border:none}
+.mlbl{color:var(--txt3);font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.5px}
+.mval{font-family:'DM Mono',monospace;font-size:12px;font-weight:600;text-align:right;max-width:280px;word-break:break-word}
+.macts{display:flex;gap:8px;margin-top:16px;flex-wrap:wrap}
+.mbtn{flex:1;min-width:110px;padding:9px 14px;border-radius:6px;border:none;font-family:'DM Sans',sans-serif;font-size:12px;font-weight:600;cursor:pointer;transition:all .15s;text-align:center}
+.mbtn-cl{background:var(--surf2);color:var(--txt);border:1.5px solid var(--bord)}.mbtn-cl:hover{background:var(--bord)}
+.mbtn-pdf{background:#dc2626;color:#fff}.mbtn-pdf:hover{background:#b91c1c}
+.mbtn-wa{background:#25d366;color:#fff}.mbtn-wa:hover{background:#1db954}
+.rcb{cursor:pointer;width:13px;height:13px;accent-color:var(--accent)}
+</style>
+</head>
+<body>
+
+<div class="hdr">
+  <div>
+    <div class="hdr-title">BO / PO Stock Match Report &mdash; South Region</div>
+    <div class="hdr-sub">Branches: CHK (Chakkarakkal) &bull; KNR (Kannur) &bull; KPBA (Kuthuparamba) &bull; TPBA (Taliparamba) &bull; 08 June 2026</div>
+  </div>
+  <div class="hdr-stats">
+    <div><div class="sv" id="st-tot">&mdash;</div><div class="sl">Matches</div></div>
+    <div><div class="sv" id="st-dlr">&mdash;</div><div class="sl">Dealers</div></div>
+    <div><div class="sv" id="st-pts">&mdash;</div><div class="sl">Parts</div></div>
+  </div>
+</div>
+<div class="branches">
+  <span style="font-size:10px;font-weight:700;color:var(--txt3);text-transform:uppercase;letter-spacing:.6px">Branches:</span>
+  <span class="btag"><span class="bd b1"></span>CHK &ndash; Chakkarakkal</span>
+  <span class="btag"><span class="bd b2"></span>KNR &ndash; Kannur</span>
+  <span class="btag"><span class="bd b3"></span>KPBA &ndash; Kuthuparamba</span>
+  <span class="btag"><span class="bd b4"></span>TPBA &ndash; Taliparamba</span>
+</div>
+<div class="fbar">
+  <div class="fg"><div class="fl">State</div>
+    <select class="fc" id="f-state">
+      <option value="">All States</option>
+      <option value="AP">AP &ndash; Andhra Pradesh</option>
+      <option value="KA">KA &ndash; Karnataka</option>
+      <option value="KL">KL &ndash; Kerala</option>
+      <option value="TN">TN &ndash; Tamil Nadu</option>
+      <option value="AN">AN &ndash; Andaman</option>
+      <option value="PY">PY &ndash; Puducherry</option>
+      <option value="BW">BW &ndash; Others</option>
+    </select>
+  </div>
+  <div class="fg"><div class="fl">Dealer Code</div>
+    <input type="text" class="fc" id="f-dcode" placeholder="e.g. KA010001" style="min-width:130px">
+  </div>
+  <div class="fg"><div class="fl">Dealer Name</div>
+    <input type="text" class="fc" id="f-dname" placeholder="Search name..." style="min-width:150px">
+  </div>
+  <div class="fg"><div class="fl">Part Number</div>
+    <input type="text" class="fc" id="f-part" placeholder="e.g. 09120-K0L-D01" style="min-width:175px">
+  </div>
+  <div class="fg"><div class="fl">Status</div>
+    <select class="fc" id="f-status">
+      <option value="">All</option>
+      <option value="BACKORDER">Backorder</option>
+      <option value="ORDER WITHOUT PAYMENT">OWP</option>
+    </select>
+  </div>
+  <button class="fbtn" onclick="clearFilters()">&#10005; Clear</button>
+  <div style="flex:1;min-width:4px"></div>
+  <span class="selcount" id="sel-count"></span>
+  <button class="fbtn grn" onclick="selectAll()">&#9745; All Visible</button>
+  <button class="fbtn" onclick="deselectAll()">&#9744; Clear Sel</button>
+  <button class="fbtn acc" onclick="downloadPDF()">&#8595; PDF</button>
+  <button class="fbtn wa" onclick="sendWA()">WhatsApp &#8599;</button>
+  <span class="rcount" id="rcount">Loading...</span>
+</div>
+<div class="tscroll" id="tscroll">
+  <table>
+    <thead>
+      <tr>
+        <th class="nosort" style="width:32px;text-align:center;padding:6px 4px">
+          <input type="checkbox" class="rcb" id="cb-all" onchange="toggleSelAll(this.checked)">
+        </th>
+        <th onclick="srt(1)" style="width:46px">State</th>
+        <th onclick="srt(0)" style="width:88px">D.Code</th>
+        <th onclick="srt(2)" style="min-width:160px">Dealer / Contact</th>
+        <th onclick="srt(6)" style="width:108px">Part No.</th>
+        <th onclick="srt(7)" style="min-width:140px">Description</th>
+        <th onclick="srt(8)" style="min-width:130px">Models</th>
+        <th onclick="srt(10)" style="width:56px;text-align:center">BO Qty</th>
+        <th onclick="srt(11)" style="width:74px;text-align:right">DLP (&#8377;)</th>
+        <th onclick="srt(12)" style="width:50px">Status</th>
+        <th onclick="srt(13)" class="stk-hdr" style="width:46px;text-align:center" title="Chakkarakkal Stock">CHK</th>
+        <th onclick="srt(14)" class="stk-hdr" style="width:46px;text-align:center" title="Kannur Stock">KNR</th>
+        <th onclick="srt(15)" class="stk-hdr" style="width:50px;text-align:center" title="Kuthuparamba Stock">KPBA</th>
+        <th onclick="srt(16)" class="stk-hdr" style="width:50px;text-align:center" title="Taliparamba Stock">TPBA</th>
+        <th onclick="srt(17)" class="stk-hdr" style="width:52px;text-align:center;background:#0f2d4e" title="Total all branches">TOTAL</th>
+      </tr>
+    </thead>
+    <tbody id="tbody"></tbody>
+  </table>
+  <div id="nores" class="nores" style="display:none">
+    <div style="font-size:32px;margin-bottom:10px">&#128269;</div>
+    <div>No matching records found.</div>
+  </div>
+</div>
+<div class="pag" id="pag"></div>
+<div class="moverlay" id="modal" onclick="if(event.target===this)this.classList.remove('open')">
+  <div class="modal">
+    <div class="mtitle" id="mtitle">Part Details</div>
+    <div id="mbody"></div>
+    <div class="macts">
+      <button class="mbtn mbtn-cl" onclick="document.getElementById('modal').classList.remove('open')">Close</button>
+      <button class="mbtn mbtn-pdf" onclick="singlePDF()">&#8595; PDF</button>
+      <button class="mbtn mbtn-wa" onclick="singleWA()">WhatsApp &#8599;</button>
+    </div>
+  </div>
+</div>
+
+
+<script>
+// Fields: 0=dcode,1=state,2=dealer_name,3=city,4=contact_name,5=contact,
+// 6=part_no,7=part_desc,8=models,9=vehicle_type,10=bo_qty,11=dlp,12=status,
+// 13=chk_qty,14=knr_qty,15=kpba_qty,16=tpba_qty,17=total_stock
+var RAW=[];
+
+var PS=100, pg=1, sortCol=-1, sortDir=1;
+var fd=RAW.slice(), sel=new Set(), mrow=null;
+
+function sv(n){ return (n===null||n===undefined)?0:Number(n); }
+function np(s){ return s?s.replace(/[^A-Z0-9]/gi,'').toUpperCase():''; }
+function esc(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
+function stk(n, colorClass) {
+  var v = sv(n);
+  if (v === 0) return '<span class="q0">0</span>';
+  if (v < 5)   return '<span class="qlow ' + colorClass + '">' + v + '</span>';
+  return '<span class="qok ' + colorClass + '">' + v + '</span>';
+}
+
+function stbCls(s) {
+  if (!s) return 'stOTH';
+  var u = s.toUpperCase();
+  if (u.indexOf('BACKORDER') >= 0) return 'stBO';
+  if (u.indexOf('PAYMENT') >= 0)   return 'stOWP';
+  return 'stOTH';
+}
+function stbLbl(s) {
+  if (!s) return '';
+  var u = s.toUpperCase();
+  if (u.indexOf('BACKORDER') >= 0) return 'B/O';
+  if (u.indexOf('PAYMENT') >= 0)   return 'OWP';
+  return s.substring(0, 8);
+}
+function totCls(v) {
+  if (!v || v === 0) return 'q0';
+  if (v < 5) return 'qlow';
+  return 'qok';
+}
+
+var COL_TH = [null,1,0,2,6,7,8,10,11,12,13,14,15,16,17];
+
+function srt(col) {
+  var ths = document.querySelectorAll('thead th');
+  ths.forEach(function(t){ t.classList.remove('sasc','sdesc'); });
+  var ti = COL_TH.indexOf(col);
+  if (sortCol === col) sortDir = -sortDir; else { sortCol = col; sortDir = 1; }
+  if (ti >= 0) ths[ti].classList.add(sortDir === 1 ? 'sasc' : 'sdesc');
+  fd.sort(function(a,b){
+    var av = a[col], bv = b[col];
+    if (typeof av === 'string') av = av.toLowerCase();
+    if (typeof bv === 'string') bv = bv.toLowerCase();
+    return av < bv ? -sortDir : av > bv ? sortDir : 0;
+  });
+  pg = 1; sel.clear(); updSel(); render();
+}
+
+function applyF() {
+  var fSt  = document.getElementById('f-state').value.toUpperCase();
+  var fDc  = document.getElementById('f-dcode').value.toUpperCase();
+  var fDn  = document.getElementById('f-dname').value.toLowerCase();
+  var fP   = np(document.getElementById('f-part').value);
+  var fSts = document.getElementById('f-status').value.toUpperCase();
+  fd = RAW.filter(function(r){
+    if (fSt  && r[1] !== fSt) return false;
+    if (fDc  && r[0].toUpperCase().indexOf(fDc) < 0) return false;
+    if (fDn  && r[2].toLowerCase().indexOf(fDn) < 0) return false;
+    if (fP   && np(r[6]).indexOf(fP) < 0) return false;
+    if (fSts && (r[12]||'').toUpperCase().indexOf(fSts) < 0) return false;
+    return true;
+  });
+  if (sortCol >= 0) {
+    fd.sort(function(a,b){
+      var av = a[sortCol], bv = b[sortCol];
+      if (typeof av === 'string') av = av.toLowerCase();
+      if (typeof bv === 'string') bv = bv.toLowerCase();
+      return av < bv ? -sortDir : av > bv ? sortDir : 0;
+    });
+  }
+  pg = 1; sel.clear(); updSel(); updStats(); render();
+}
+
+function updStats() {
+  var t = fd.length;
+  document.getElementById('st-tot').textContent = t.toLocaleString();
+  document.getElementById('st-dlr').textContent = new Set(fd.map(function(r){ return r[0]; })).size.toLocaleString();
+  document.getElementById('st-pts').textContent = new Set(fd.map(function(r){ return np(r[6]); })).size.toLocaleString();
+  document.getElementById('rcount').textContent = t.toLocaleString() + ' records';
+}
+
+function clearFilters() {
+  ['f-state','f-dcode','f-dname','f-part','f-status'].forEach(function(id){ document.getElementById(id).value=''; });
+  applyF();
+}
+
+function render() {
+  var tbody = document.getElementById('tbody');
+  var nores = document.getElementById('nores');
+  if (fd.length === 0) {
+    tbody.innerHTML = '';
+    nores.style.display = 'block';
+    document.getElementById('pag').innerHTML = '';
+    return;
+  }
+  nores.style.display = 'none';
+  var start = (pg - 1) * PS;
+  var page = fd.slice(start, Math.min(start + PS, fd.length));
+  var html = '';
+  page.forEach(function(r, i) {
+    var gi = start + i;
+    var isSel = sel.has(gi);
+    var dlp = sv(r[11]) > 0 ? '&#8377;' + sv(r[11]).toFixed(2) : '&mdash;';
+    var chk = sv(r[13]), knr = sv(r[14]), kpba = sv(r[15]), tpba = sv(r[16]), tot = sv(r[17]);
+    var tc = totCls(tot);
+    var sc = 's' + r[1];
+    var dh = '<div class="dn" title="' + esc(r[2]) + '">' + esc(r[2]||r[0]) + '</div>';
+    if (r[3] && r[3] !== 'nan' && r[3] !== '') dh += '<div class="ds">&#128205;' + esc(r[3]) + '</div>';
+    if (r[4] && r[4] !== 'nan' && r[4] !== '') dh += '<div class="ds">&#128100;' + esc(r[4]) + '</div>';
+    if (r[5] && r[5] !== 'nan' && r[5] !== '0' && r[5] !== '') dh += '<div class="ds">&#128222;' + esc(r[5]) + '</div>';
+    html += '<tr class="' + (isSel ? 'sel-row' : '') + '" ondblclick="openModal(' + gi + ')">';
+    html += '<td style="text-align:center;width:32px"><input type="checkbox" class="rcb" ' + (isSel ? 'checked' : '') + ' onchange="toggleRow(' + gi + ',this.checked)"></td>';
+    html += '<td><span class="sbadge ' + sc + '">' + esc(r[1]) + '</span></td>';
+    html += '<td class="dc" title="' + esc(r[0]) + '">' + esc(r[0]) + '</td>';
+    html += '<td>' + dh + '</td>';
+    html += '<td class="pn" title="' + esc(r[6]) + '">' + esc(r[6]) + '</td>';
+    html += '<td class="pd" title="' + esc(r[7]) + '">' + esc(r[7]) + '</td>';
+    html += '<td class="mn" title="' + esc(r[8]) + '">' + esc(r[8]||'&mdash;') + '</td>';
+    html += '<td class="bq">' + sv(r[10]) + '</td>';
+    html += '<td class="dlpv">' + dlp + '</td>';
+    html += '<td><span class="stbadge ' + stbCls(r[12]) + '">' + stbLbl(r[12]) + '</span></td>';
+    html += '<td class="stkc chkbdr">'  + stk(chk,  'chkv') + '</td>';
+    html += '<td class="stkc">'         + stk(knr,  'knrv') + '</td>';
+    html += '<td class="stkc">'         + stk(kpba, 'kpbv') + '</td>';
+    html += '<td class="stkc">'         + stk(tpba, 'tpbv') + '</td>';
+    html += '<td class="stkc totc ' + tc + '">' + tot + '</td>';
+    html += '</tr>';
+  });
+  tbody.innerHTML = html;
+  var pageLen = Math.min(PS, fd.length - start);
+  var allSel = true;
+  for (var i = 0; i < pageLen; i++) { if (!sel.has(start + i)) { allSel = false; break; } }
+  document.getElementById('cb-all').checked = allSel && pageLen > 0;
+  renderPag();
+}
+
+function renderPag() {
+  var total = Math.ceil(fd.length / PS);
+  var pag = document.getElementById('pag');
+  if (total <= 1) { pag.innerHTML = ''; return; }
+  var h = '<button class="pb" onclick="goP(' + (pg-1) + ')" ' + (pg===1?'disabled':'') + '>&lsaquo;</button>';
+  var d = 2, pages = [1, total], p;
+  for (p = Math.max(2, pg-d); p <= Math.min(total-1, pg+d); p++) pages.push(p);
+  pages = [...new Set(pages)].sort(function(a,b){return a-b;});
+  var prev = 0;
+  pages.forEach(function(p) {
+    if (prev && p - prev > 1) h += '<span class="pi">&hellip;</span>';
+    h += '<button class="pb ' + (p===pg?'act':'') + '" onclick="goP(' + p + ')">' + p + '</button>';
+    prev = p;
+  });
+  h += '<button class="pb" onclick="goP(' + (pg+1) + ')" ' + (pg===total?'disabled':'') + '>&rsaquo;</button>';
+  h += '<span class="pi">' + ((pg-1)*PS+1).toLocaleString() + '&ndash;' + Math.min(pg*PS, fd.length).toLocaleString() + ' of ' + fd.length.toLocaleString() + '</span>';
+  pag.innerHTML = h;
+}
+
+function goP(p) {
+  var total = Math.ceil(fd.length / PS);
+  if (p < 1 || p > total) return;
+  pg = p; render();
+  document.getElementById('tscroll').scrollTop = 0;
+}
+
+function toggleRow(gi, checked) {
+  if (checked) sel.add(gi); else sel.delete(gi);
+  updSel();
+  var start = (pg-1)*PS;
+  var rows = document.getElementById('tbody').querySelectorAll('tr');
+  rows.forEach(function(tr, i) { tr.classList.toggle('sel-row', sel.has(start + i)); });
+  var pageLen = Math.min(PS, fd.length - start);
+  var allSel = true;
+  for (var i = 0; i < pageLen; i++) { if (!sel.has(start+i)) { allSel=false; break; } }
+  document.getElementById('cb-all').checked = allSel;
+}
+function toggleSelAll(checked) {
+  var start = (pg-1)*PS, end = Math.min(start+PS, fd.length);
+  for (var i = start; i < end; i++) { if (checked) sel.add(i); else sel.delete(i); }
+  updSel(); render();
+}
+function selectAll()  { for (var i=0; i<fd.length; i++) sel.add(i); updSel(); render(); }
+function deselectAll(){ sel.clear(); updSel(); render(); }
+function updSel() {
+  var n = sel.size;
+  document.getElementById('sel-count').textContent = n > 0 ? n.toLocaleString() + ' selected' : '';
+}
+
+function pdfRows(rows) {
+  return rows.map(function(r) {
+    return [r[0], r[1], r[2]||r[0], r[6], r[7], (r[8]||'-').substring(0,35),
+      sv(r[10]), sv(r[11])>0?'Rs.'+sv(r[11]).toFixed(2):'-', stbLbl(r[12]),
+      sv(r[13]), sv(r[14]), sv(r[15]), sv(r[16]), sv(r[17])];
+  });
+}
+function genPDF(rows, fname) {
+  var jsPDF = window.jspdf.jsPDF;
+  var doc = new jsPDF({orientation:'landscape', unit:'pt', format:'a4'});
+  doc.setFont('helvetica','bold'); doc.setFontSize(12);
+  doc.text('BO/PO Stock Match Report - South Region', 40, 34);
+  doc.setFont('helvetica','normal'); doc.setFontSize(7.5);
+  doc.text('Generated: ' + new Date().toLocaleString('en-IN') + '  |  ' + rows.length + ' rows', 40, 48);
+  doc.autoTable({
+    startY: 58,
+    head: [['D.Code','St','Dealer','Part No.','Description','Model(s)','BO Qty','DLP','Status','CHK','KNR','KPBA','TPBA','TOTAL']],
+    body: pdfRows(rows),
+    styles: {fontSize:6.5, cellPadding:3, overflow:'ellipsize'},
+    headStyles: {fillColor:[26,26,24], textColor:255, fontStyle:'bold', fontSize:6.5},
+    columnStyles: {
+      0:{cellWidth:54}, 1:{cellWidth:20}, 2:{cellWidth:70}, 3:{cellWidth:65}, 4:{cellWidth:72},
+      5:{cellWidth:68}, 6:{cellWidth:28,halign:'center'}, 7:{cellWidth:40,halign:'right'},
+      8:{cellWidth:26}, 9:{cellWidth:22,halign:'center'}, 10:{cellWidth:22,halign:'center'},
+      11:{cellWidth:26,halign:'center'}, 12:{cellWidth:26,halign:'center'},
+      13:{cellWidth:28,halign:'center',fontStyle:'bold'}
+    },
+    alternateRowStyles: {fillColor:[252,252,250]},
+    didDrawPage: function(d) {
+      doc.setFontSize(7); doc.setTextColor(150);
+      doc.text('Page ' + d.pageNumber, doc.internal.pageSize.width-40, doc.internal.pageSize.height-14, {align:'right'});
+    }
+  });
+  doc.save(fname);
+}
+function downloadPDF() {
+  var rows = [...sel].sort(function(a,b){return a-b;}).map(function(i){return fd[i];});
+  if (!rows.length) { alert('Select at least one row first.'); return; }
+  genPDF(rows, 'BO_Stock_Match_Selected.pdf');
+}
+
+function buildWAMsg(rows) {
+  var byD = {};
+  rows.forEach(function(r) {
+    if (!byD[r[0]]) byD[r[0]] = {n:r[2]||r[0], c:r[5], city:r[3], rows:[]};
+    byD[r[0]].rows.push(r);
+  });
+  var dealers = Object.values(byD);
+  var msg, num = '';
+  if (dealers.length === 1) {
+    var d = dealers[0];
+    msg = '*Honda Parts - Stock Availability*\n';
+    msg += 'Dealer: *' + d.n + '*';
+    if (d.city && d.city !== 'nan') msg += ' (' + d.city + ')';
+    msg += '\nDate: ' + new Date().toLocaleDateString('en-IN') + '\n\n';
+    d.rows.forEach(function(r) {
+      msg += '* ' + r[6] + ' - ' + r[7] + '\n';
+      msg += '  Req: ' + sv(r[10]) + '  DLP: ' + (sv(r[11])>0 ? 'Rs.' + sv(r[11]).toFixed(2) : '-') + '\n';
+      msg += '  Stock: CHK=' + sv(r[13]) + ' KNR=' + sv(r[14]) + ' KPBA=' + sv(r[15]) + ' TPBA=' + sv(r[16]) + ' Total=' + sv(r[17]) + '\n';
+    });
+    msg += '\nCAC Spare Parts Team';
+    if (d.c && d.c !== 'nan' && d.c !== '0') {
+      num = d.c.toString().replace(/[^0-9]/g,'');
+      if (num.length === 10) num = '91' + num;
+    }
+  } else {
+    msg = '*Honda Parts - Stock Availability Report*\n';
+    msg += 'Date: ' + new Date().toLocaleDateString('en-IN') + '\n';
+    msg += rows.length + ' parts across ' + dealers.length + ' dealers\n\n';
+    dealers.forEach(function(d) {
+      msg += '*' + d.n + '*\n';
+      d.rows.slice(0,3).forEach(function(r) {
+        msg += '  ' + r[6] + ' - ' + r[7] + ' | BO:' + sv(r[10]) + ' Total:' + sv(r[17]) + '\n';
+      });
+      if (d.rows.length > 3) msg += '  ...and ' + (d.rows.length-3) + ' more\n';
+    });
+    msg += '\nCAC Spare Parts Team';
+  }
+  return {msg: msg, num: num};
+}
+function sendWA() {
+  var rows = [...sel].sort(function(a,b){return a-b;}).map(function(i){return fd[i];});
+  if (!rows.length) { alert('Select at least one row first.'); return; }
+  var res = buildWAMsg(rows);
+  window.open('https://wa.me/' + res.num + '?text=' + encodeURIComponent(res.msg), '_blank');
+}
+
+function openModal(gi) {
+  mrow = fd[gi];
+  var r = mrow;
+  document.getElementById('mtitle').textContent = r[6] + ' - ' + r[7];
+  var pairs = [
+    ['Dealer', esc(r[2]||r[0]) + ' [' + esc(r[0]) + ']'],
+    ['State / City', esc(r[1]) + (r[3]&&r[3]!=='nan' ? ' / '+esc(r[3]) : '')],
+    ['Contact', (r[4]&&r[4]!=='nan' ? esc(r[4])+' - ' : '') + ((r[5]&&r[5]!=='nan'&&r[5]!=='0') ? esc(r[5]) : '-')],
+    ['Part Number', esc(r[6])],
+    ['Description', esc(r[7])],
+    ['Models', esc(r[8]||'-')],
+    ['Vehicle Type', esc(r[9]||'-')],
+    ['BO (Required) Qty', sv(r[10])],
+    ['DLP (Rs.)', sv(r[11])>0 ? 'Rs.'+sv(r[11]).toFixed(2) : '-'],
+    ['Status', esc(r[12]||'-')],
+    ['CHK Stock', sv(r[13])],
+    ['KNR Stock', sv(r[14])],
+    ['KPBA Stock', sv(r[15])],
+    ['TPBA Stock', sv(r[16])],
+    ['Total Stock', '<strong>' + sv(r[17]) + '</strong>']
+  ];
+  document.getElementById('mbody').innerHTML = pairs.map(function(p) {
+    return '<div class="mrow"><span class="mlbl">'+p[0]+'</span><span class="mval">'+p[1]+'</span></div>';
+  }).join('');
+  document.getElementById('modal').classList.add('open');
+}
+function singlePDF() {
+  if (!mrow) return;
+  document.getElementById('modal').classList.remove('open');
+  genPDF([mrow], 'Honda_Part_' + mrow[6] + '.pdf');
+}
+function singleWA() {
+  if (!mrow) return;
+  var res = buildWAMsg([mrow]);
+  window.open('https://wa.me/' + res.num + '?text=' + encodeURIComponent(res.msg), '_blank');
+}
+
+document.getElementById('f-state').addEventListener('change', applyF);
+document.getElementById('f-status').addEventListener('change', applyF);
+document.getElementById('f-dcode').addEventListener('input', applyF);
+document.getElementById('f-dname').addEventListener('input', applyF);
+document.getElementById('f-part').addEventListener('input', applyF);
+
+function boot(data){ RAW = data; fd = RAW.slice(); updStats(); render(); }
+function showLoadError(msg){
+  var n = document.getElementById('nores');
+  document.getElementById('rcount').textContent = 'Failed to load data.json';
+  n.style.display = 'block';
+  n.innerHTML = '<div style="font-size:32px;margin-bottom:10px">&#9888;</div>'
+    + '<div>Could not load <b>data.json</b>.<br>Make sure data.json sits next to index.html, '
+    + 'and open this page from its web address (not by double-clicking the file).'
+    + '<br><br><small style="color:#9a9a8e">' + msg + '</small></div>';
+}
+document.getElementById('rcount').textContent = 'Loading data\u2026';
+fetch('./data.json', {cache:'no-store'})
+  .then(function(r){ if(!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
+  .then(function(d){ boot(d); })
+  .catch(function(e){ showLoadError(e.message); });
+</script>
+
+</body>
+</html>
