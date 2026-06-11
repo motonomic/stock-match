@@ -6,6 +6,7 @@
 <title>BO/PO Stock Match - South Region</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
+<script src="data.js"></script>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:wght@400;500;600;700&display=swap');
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
@@ -126,8 +127,8 @@ tbody td{padding:6px 9px;border-right:1px solid var(--bord);vertical-align:middl
   <div class="fg"><div class="fl">Dealer Name</div>
     <input type="text" class="fc" id="f-dname" placeholder="Search name..." style="min-width:150px">
   </div>
-  <div class="fg"><div class="fl">Part Number</div>
-    <input type="text" class="fc" id="f-part" placeholder="e.g. 09120-K0L-D01" style="min-width:175px">
+  <div class="fg"><div class="fl">Part No / Name</div>
+    <input type="text" class="fc" id="f-part" placeholder="e.g. 09120-K0L-D01 or OIL SEAL" style="min-width:175px">
   </div>
   <div class="fg"><div class="fl">Status</div>
     <select class="fc" id="f-status">
@@ -143,7 +144,7 @@ tbody td{padding:6px 9px;border-right:1px solid var(--bord);vertical-align:middl
   <button class="fbtn" onclick="deselectAll()">&#9744; Clear Sel</button>
   <button class="fbtn acc" onclick="downloadPDF()">&#8595; PDF</button>
   <button class="fbtn wa" onclick="sendWA()">WhatsApp &#8599;</button>
-  <span class="rcount" id="rcount">Loading data.json...</span>
+  <span class="rcount" id="rcount">Loading...</span>
 </div>
 <div class="tscroll" id="tscroll">
   <table>
@@ -250,13 +251,19 @@ function applyF() {
   var fSt  = document.getElementById('f-state').value.toUpperCase();
   var fDc  = document.getElementById('f-dcode').value.toUpperCase();
   var fDn  = document.getElementById('f-dname').value.toLowerCase();
-  var fP   = np(document.getElementById('f-part').value);
+  var fPin = document.getElementById('f-part').value;
+  var fP   = np(fPin);
+  var fPraw= fPin.trim().toUpperCase();
   var fSts = document.getElementById('f-status').value.toUpperCase();
   fd = RAW.filter(function(r){
     if (fSt  && r[1] !== fSt) return false;
     if (fDc  && r[0].toUpperCase().indexOf(fDc) < 0) return false;
     if (fDn  && r[2].toLowerCase().indexOf(fDn) < 0) return false;
-    if (fP   && np(r[6]).indexOf(fP) < 0) return false;
+    if (fP) {
+      var partNoMatch = np(r[6]).indexOf(fP) >= 0;
+      var partNameMatch = (r[7]||'').toUpperCase().indexOf(fPraw) >= 0;
+      if (!partNoMatch && !partNameMatch) return false;
+    }
     if (fSts && (r[12]||'').toUpperCase().indexOf(fSts) < 0) return false;
     return true;
   });
@@ -514,24 +521,29 @@ document.getElementById('f-dname').addEventListener('input', applyF);
 document.getElementById('f-part').addEventListener('input', applyF);
 
 function bootData(payload){
-  RAW = payload.rows || payload;
+  var rows = Array.isArray(payload) ? payload : (payload && Array.isArray(payload.rows) ? payload.rows : null);
+  if(!rows){ showLoadError('data.js loaded but no rows were found in it.'); return; }
+  RAW = rows;
   fd = RAW.slice();
-  if(payload.bo_date){
+  var meta = Array.isArray(payload) ? {} : payload;
+  if(meta && meta.bo_date){
     var sub=document.querySelector('.hdr-sub');
-    if(sub) sub.innerHTML='Branches: CHK (Chakkarakkal) &bull; KNR (Kannur) &bull; KPBA (Kuthuparamba) &bull; TPBA (Taliparamba) &bull; BO '+payload.bo_date+' &bull; Stock '+(payload.stock_date||payload.bo_date);
+    if(sub) sub.innerHTML='Branches: CHK (Chakkarakkal) &bull; KNR (Kannur) &bull; KPBA (Kuthuparamba) &bull; TPBA (Taliparamba) &bull; BO '+meta.bo_date+' &bull; Stock '+(meta.stock_date||meta.bo_date);
   }
   updStats();
   render();
 }
-fetch('data.json?_='+Date.now())
-  .then(function(res){ if(!res.ok) throw new Error('HTTP '+res.status); return res.json(); })
-  .then(function(payload){ bootData(payload); })
-  .catch(function(err){
-    var nr=document.getElementById('nores');
-    if(nr){ nr.style.display='block'; nr.innerHTML='<div style="font-size:32px;margin-bottom:10px">&#9888;</div><div>Could not load <b>data.json</b>.</div><div style="margin-top:6px;font-size:12px">Place data.json in the same folder as this file. ('+err.message+')</div>'; }
-    var rc=document.getElementById('rcount'); if(rc) rc.textContent='data.json not found';
-  });
-</script>
+function showLoadError(msg){
+  var nr=document.getElementById('nores');
+  if(nr){ nr.style.display='block'; nr.innerHTML='<div style="font-size:32px;margin-bottom:10px">&#9888;</div><div>Could not load data.</div><div style="margin-top:6px;font-size:12px">'+msg+'</div>'; }
+  var rc=document.getElementById('rcount'); if(rc) rc.textContent='data not loaded';
+}
+// Data is provided by data.js as window.STOCK_DATA (works via double-click AND web hosting)
+if(window.STOCK_DATA){
+  bootData(window.STOCK_DATA);
+} else {
+  showLoadError('data.js was not found next to index.html, or it did not set window.STOCK_DATA. Make sure data.js sits in the same folder.');
+}</script>
 
 </body>
 </html>
