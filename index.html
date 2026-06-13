@@ -379,8 +379,8 @@ function toggleRow(gi, checked) {
   document.getElementById('cb-all').checked = allSel;
 }
 function toggleSelAll(checked) {
-  var start = (pg-1)*PS, end = Math.min(start+PS, fd.length);
-  for (var i = start; i < end; i++) { if (checked) sel.add(i); else sel.delete(i); }
+  if (checked) { for (var i = 0; i < fd.length; i++) sel.add(i); }
+  else { sel.clear(); }
   updSel(); render();
 }
 function selectAll()  { for (var i=0; i<fd.length; i++) sel.add(i); updSel(); render(); }
@@ -392,7 +392,10 @@ function updSel() {
 
 function pdfRows(rows) {
   return rows.map(function(r) {
-    return [r[0], r[1], r[2]||r[0], r[6], r[7], (r[8]||'-').substring(0,35),
+    var dealerCell = (r[2]||r[0]);
+    if (r[4]) dealerCell += '\n' + r[4];
+    var contactCell = (r[5] && r[5] !== '0') ? r[5] : '-';
+    return [r[0], r[1], dealerCell, contactCell, r[6], r[7], (r[8]||'-').substring(0,35),
       sv(r[10]), sv(r[11])>0?'Rs.'+sv(r[11]).toFixed(2):'-', stbLbl(r[12]),
       sv(r[13]), sv(r[14]), sv(r[15]), sv(r[16]), sv(r[17])];
   });
@@ -406,16 +409,16 @@ function genPDF(rows, fname) {
   doc.text('Generated: ' + new Date().toLocaleString('en-IN') + '  |  ' + rows.length + ' rows', 40, 48);
   doc.autoTable({
     startY: 58,
-    head: [['D.Code','St','Dealer','Part No.','Description','Model(s)','BO Qty','DLP','Status','CHK','KNR','KPBA','TPBA','TOTAL']],
+    head: [['D.Code','St','Dealer','Contact','Part No.','Description','Model(s)','BO Qty','DLP','Status','CHK','KNR','KPBA','TPBA','TOTAL']],
     body: pdfRows(rows),
     styles: {fontSize:6.5, cellPadding:3, overflow:'ellipsize'},
     headStyles: {fillColor:[26,26,24], textColor:255, fontStyle:'bold', fontSize:6.5},
     columnStyles: {
-      0:{cellWidth:54}, 1:{cellWidth:20}, 2:{cellWidth:70}, 3:{cellWidth:65}, 4:{cellWidth:72},
-      5:{cellWidth:68}, 6:{cellWidth:28,halign:'center'}, 7:{cellWidth:40,halign:'right'},
-      8:{cellWidth:26}, 9:{cellWidth:22,halign:'center'}, 10:{cellWidth:22,halign:'center'},
-      11:{cellWidth:26,halign:'center'}, 12:{cellWidth:26,halign:'center'},
-      13:{cellWidth:28,halign:'center',fontStyle:'bold'}
+      0:{cellWidth:50}, 1:{cellWidth:18}, 2:{cellWidth:78}, 3:{cellWidth:52}, 4:{cellWidth:62}, 5:{cellWidth:88},
+      6:{cellWidth:58}, 7:{cellWidth:26,halign:'center'}, 8:{cellWidth:38,halign:'right'},
+      9:{cellWidth:24}, 10:{cellWidth:22,halign:'center'}, 11:{cellWidth:22,halign:'center'},
+      12:{cellWidth:24,halign:'center'}, 13:{cellWidth:24,halign:'center'},
+      14:{cellWidth:28,halign:'center',fontStyle:'bold'}
     },
     alternateRowStyles: {fillColor:[252,252,250]},
     didDrawPage: function(d) {
