@@ -3,7 +3,7 @@
 This site is now **two files**:
 
 - **`index.html`** — the page (layout, filters, PDF, WhatsApp). **This never changes.**
-- **`data.json`** — the stock-match rows. **This is the only file you replace each update.**
+- **`data.js`** — the stock-match rows. **This is the only file you replace each update.**
 
 ## How to update (every other day)
 1. Get the new `data.json` (generated from the day's Excel).
